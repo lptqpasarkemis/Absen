@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<!-- skill:chrome -->
+<style>
+/* Credit line — bottom-right */
+.design-ui-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font: 11px/1 system-ui, sans-serif;
+  color: rgba(128,128,128,0.5);
+  pointer-events: none;
+  z-index: 2147483647;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Hide chrome on touch devices */
+@media (hover: none) {
+  .design-ui-credit { display: none; }
+}
+
+/* Print fixes */
+@media print {
+  * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .design-ui-credit { display: none !important; }
+}
+
+</style>
+<script>
+(function () {
+    // Design-ui pages are single compositions, so the whole body is editable.
+    function markEditable() {
+        document.body.classList.add('artifact-editable');
+    }
+
+    // Credit badge with idle-fade. Hover devices only.
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+
+        var timer = null;
+        var fade = function (out) { credit.style.opacity = out ? '0' : ''; };
+        fade(true);
+        var show = function () {
+            fade(false);
+            clearTimeout(timer);
+            timer = setTimeout(function () { fade(true); }, 3000);
+        };
+        document.addEventListener('mousemove', show);
+        show();
+    }
+
+    function init() {
+        markEditable();
+        initChromeUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+</script>
+<!-- /skill:chrome -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan Absen - e-Hadir MA Al Istiqomah</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#f2f7f4;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{background:#fff;border-radius:24px;box-shadow:0 18px 44px rgba(20,50,40,.12);max-width:420px;width:100%;overflow:hidden}
+.top{background:linear-gradient(150deg,#00583a,#00714a);color:#fff;padding:32px 28px;text-align:center}
+.top.pulang{background:linear-gradient(150deg,#5c3d00,#c78400)}
+.top .icon{font-size:3rem;margin-bottom:10px}
+.top h1{font-size:1.4rem;font-weight:800}
+.top p{opacity:.88;font-size:.9rem;margin-top:6px}
+.body{padding:28px}
+.jam{font-size:2.4rem;font-weight:800;font-variant-numeric:tabular-nums;margin:8px 0;text-align:center;color:#00583a}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:.82rem;font-weight:600;color:#516158;margin-bottom:7px}
+.field input{width:100%;padding:14px 16px;border:1.5px solid #dde6e1;border-radius:12px;font-size:1rem;font-family:inherit}
+.field input:focus{outline:none;border-color:#00714a;box-shadow:0 0 0 3px rgba(0,113,74,.12)}
+.btn{width:100%;padding:15px;background:#00714a;color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit}
+.btn:hover{background:#00583a}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.msg{margin-top:18px;padding:16px;border-radius:12px;font-size:.92rem;font-weight:600;text-align:center;display:none}
+.msg.ok{display:block;background:#e3f4ec;color:#268257}
+.msg.err{display:block;background:#fbe7e3;color:#d1503f}
+.msg.loading{display:block;background:#e8f0fa;color:#4d7fc4}
+.nama-guru{font-size:1.1rem;font-weight:700;text-align:center;margin-bottom:16px;color:#00583a}
+.info{margin-top:14px;font-size:.78rem;color:#8a978f;text-align:center}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="top" id="topBar">
+    <div class="icon" id="ico">&#128273;</div>
+    <h1 id="title">Absen Datang</h1>
+    <p>MA Al Istiqomah</p>
+  </div>
+  <div class="body">
+    <div class="jam" id="clock">--:--:--</div>
+
+    <!-- Auto mode (QR per guru) -->
+    <div id="autoMode" style="display:none">
+      <div class="nama-guru" id="autoNama">Memproses...</div>
+      <div class="msg loading" id="autoMsg">Mencatat kehadiran...</div>
+    </div>
+
+    <!-- Manual mode (fallback) -->
+    <div id="manualMode" style="display:none">
+      <div class="field">
+        <label>NIP Guru</label>
+        <input type="text" id="nip" placeholder="Masukkan NIP" inputmode="numeric" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Kata Sandi</label>
+        <input type="password" id="pass" placeholder="Kata sandi">
+      </div>
+      <button class="btn" id="btnAbsen" onclick="doManual()">Absen Sekarang</button>
+      <div class="msg" id="manualMsg"></div>
+    </div>
+
+    <div class="info">e-Hadir MA Al Istiqomah</div>
+  </div>
+</div>
+
+<script>
+// ====== KONFIGURASI API ======
+// GANTI dengan URL Web App Google Apps Script Anda:
+var API_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
+function gcall(fn) {
+  var args = [].slice.call(arguments, 1);
+  var payload = JSON.stringify(args);
+  
+  if (payload.length < 1500) {
+    var url = API_URL + "?fn=" + encodeURIComponent(fn) + "&args=" + encodeURIComponent(payload);
+    return fetch(url, { redirect: 'follow' })
+      .then(function(r) { return r.text(); })
+      .then(function(text) {
+        var r = JSON.parse(text);
+        if (!r.ok) throw new Error(r.error || "Server error");
+        return r.data;
+      });
+  }
+
+  return fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ fn: fn, args: args }),
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    redirect: 'follow'
+  })
+  .then(function(r) { return r.text(); })
+  .then(function(text) {
+    var r = JSON.parse(text);
+    if (!r.ok) throw new Error(r.error || "Server error");
+    return r.data;
+  });
+}
+
+// ====== PARAMETER & SETUP ======
+var params = new URLSearchParams(window.location.search);
+var TIPE = params.get("tipe") || "datang";
+var NIP = params.get("nip") || "";
+var KEY = params.get("key") || "";
+
+// UI setup
+document.getElementById("title").textContent = "Absen " + (TIPE === "pulang" ? "Pulang" : "Datang");
+document.getElementById("ico").innerHTML = TIPE === "pulang" ? "&#128682;" : "&#128273;";
+if (TIPE === "pulang") document.getElementById("topBar").classList.add("pulang");
+
+// Clock (WIB)
+setInterval(function(){
+  var d = new Date();
+  var j = new Date(d.getTime() + (d.getTimezoneOffset()*60000) + (7*3600000));
+  document.getElementById("clock").textContent =
+    String(j.getHours()).padStart(2,"0") + ":" +
+    String(j.getMinutes()).padStart(2,"0") + ":" +
+    String(j.getSeconds()).padStart(2,"0");
+}, 1000);
+
+// ====== AUTO MODE (QR per guru, langsung absen) ======
+if (NIP && KEY) {
+  document.getElementById("autoMode").style.display = "block";
+  document.getElementById("manualMode").style.display = "none";
+  document.getElementById("title").textContent = "Absen Kehadiran";
+  document.getElementById("ico").innerHTML = "&#9989;";
+
+  gcall("apiAbsenQr", NIP, KEY, "auto")
+    .then(function(r) {
+      document.getElementById("autoNama").textContent = r.nama;
+      var msg = document.getElementById("autoMsg");
+      msg.className = "msg ok";
+      msg.textContent = "\u2713 Absen " + r.tipe.toUpperCase() + " berhasil pukul " + r.jam + " (" + r.status + ")";
+      if (r.tipe === "pulang") document.getElementById("topBar").classList.add("pulang");
+    })
+    .catch(function(e) {
+      document.getElementById("autoNama").textContent = "";
+      var msg = document.getElementById("autoMsg");
+      msg.className = "msg err";
+      msg.textContent = e.message || "Gagal mencatat absen.";
+    });
+} else {
+  // Manual mode (no QR params)
+  document.getElementById("autoMode").style.display = "none";
+  document.getElementById("manualMode").style.display = "block";
+}
+
+// ====== MANUAL MODE ======
+function doManual() {
+  var nip = document.getElementById("nip").value.trim();
+  var pass = document.getElementById("pass").value.trim();
+  var msg = document.getElementById("manualMsg");
+  var btn = document.getElementById("btnAbsen");
+
+  msg.className = "msg"; msg.style.display = "none";
+  if (!nip || !pass) { show("manualMsg","err","NIP dan sandi wajib diisi."); return; }
+  
+  btn.disabled = true; btn.textContent = "Memproses...";
+
+  gcall("apiAbsenScan", nip, pass, TIPE)
+    .then(function(r) {
+      btn.disabled = false; btn.textContent = "Absen Sekarang";
+      show("manualMsg","ok","\u2713 " + r.nama + " berhasil absen " + r.tipe + " pukul " + r.jam + " (" + r.status + ")");
+      document.getElementById("nip").value = "";
+      document.getElementById("pass").value = "";
+    })
+    .catch(function(e) {
+      btn.disabled = false; btn.textContent = "Absen Sekarang";
+      show("manualMsg","err", e.message || "Gagal.");
+    });
+}
+
+function show(id, type, text) {
+  var el = document.getElementById(id);
+  el.className = "msg " + type;
+  el.textContent = text;
+  el.style.display = "block";
+}
+
+// Enter key on password field
+var passEl = document.getElementById("pass");
+if (passEl) {
+  passEl.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") doManual();
+  });
+}
+</script>
+</body>
+</html>
