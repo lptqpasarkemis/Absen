@@ -141,7 +141,21 @@ V.dash=function(b){gcall("apiHome").then(function(h){var c=h.statistik.siswa,tot
 V.dataGuru=function(b){gcall("apiList",TK,"guru").then(function(r){b.innerHTML='<div class="toolbar"><button class="btn-gh" onclick="dlTpl(\'guru\')">&#11123; Template</button><label class="btn-gh" style="cursor:pointer"><input type="file" accept=".csv" style="display:none" onchange="upCSV(this,\'guru\')">&#11014; Upload CSV</label></div><div class="panel"><div class="tablewrap"><table class="dt"><thead><tr><th>Nama</th><th>NIP</th><th>Mapel</th><th>HP</th></tr></thead><tbody>'+r.map(function(g){return'<tr><td><b>'+g.Nama+'</b></td><td class="tnum">'+g.NIP+'</td><td>'+(g.Mapel||'-')+'</td><td class="tnum">'+(g["No HP"]||'-')+'</td></tr>'}).join("")+'</tbody></table></div></div>'}).catch(function(e){b.innerHTML=errB(e)})};
 V.dataSiswa=function(b){gcall("apiList",TK,"siswa").then(function(r){b.innerHTML='<div class="toolbar"><button class="btn-gh" onclick="dlTpl(\'siswa\')">&#11123; Template</button><label class="btn-gh" style="cursor:pointer"><input type="file" accept=".csv" style="display:none" onchange="upCSV(this,\'siswa\')">&#11014; Upload CSV</label></div><div class="panel"><div class="tablewrap"><table class="dt"><thead><tr><th>Nama</th><th>NISN</th><th>Kelas</th><th>JK</th></tr></thead><tbody>'+r.map(function(s){return'<tr><td><b>'+s.Nama+'</b></td><td class="tnum">'+s.NISN+'</td><td>'+s.Kelas+'</td><td>'+s.JK+'</td></tr>'}).join("")+'</tbody></table></div></div>'}).catch(function(e){b.innerHTML=errB(e)})};
 V.jadwal=function(b){gcall("apiList",TK,"jadwal").then(function(r){b.innerHTML='<div class="panel"><div class="tablewrap"><table class="dt"><thead><tr><th>Hari</th><th>Jam</th><th>Kelas</th><th>Mapel</th><th>Guru</th></tr></thead><tbody>'+r.map(function(j){return'<tr><td>'+j.Hari+'</td><td class="tnum">'+j["Jam Mulai"]+'</td><td>'+j.Kelas+'</td><td>'+j.Mapel+'</td><td>'+j["Nama Guru"]+'</td></tr>'}).join("")+'</tbody></table></div></div>'}).catch(function(e){b.innerHTML=errB(e)})};
-V.piket=function(b){gcall("apiList",TK,"piket").then(function(r){b.innerHTML='<div class="panel"><div class="tablewrap"><table class="dt"><thead><tr><th>Hari</th><th>Guru</th><th>NIP</th></tr></thead><tbody>'+r.map(function(p){return'<tr><td>'+p.Hari+'</td><td>'+p["Nama Guru Piket"]+'</td><td class="tnum">'+p.NIP+'</td></tr>'}).join("")+'</tbody></table></div></div>'}).catch(function(e){b.innerHTML=errB(e)})};
+V.piket=function(b){gcall("apiList",TK,"piket").then(function(r){
+  window._piket=r;
+  b.innerHTML='<div class="toolbar"><button class="btn-em" onclick="addPiket()">+ Tambah Piket</button></div>'
+    +'<div class="panel"><div class="tablewrap"><table class="dt"><thead><tr><th>Hari</th><th>Guru Piket</th><th>NIP</th><th style="text-align:right">Aksi</th></tr></thead><tbody>'
+    +r.map(function(p){
+      return '<tr><td>'+p.Hari+'</td><td>'+p["Nama Guru Piket"]+'</td><td class="tnum">'+p.NIP+'</td>'
+        +'<td style="text-align:right">'
+        +'<button class="btn-gh" style="padding:4px 8px;font-size:.72rem" onclick="editPiket('+p.ID+')">&#9998;</button> '
+        +'<button class="btn-gh" style="padding:4px 8px;font-size:.72rem" onclick="delPiket('+p.ID+')">&#128465;</button>'
+        +'</td></tr>';
+    }).join("")
+    +'</tbody></table></div></div>';
+}).catch(function(e){b.innerHTML=errB(e)})};
+
+
 // FIX BUG #3: rkKelas and rkDP now have inline filter for print
 V.rkKelas=function(b){gcall("apiRekapGuruKelasAgg",TK,bln()).then(function(r){window._gkA=r;b.innerHTML='<div class="toolbar"><button class="btn-em" onclick="prGK()">&#128424; Cetak F5</button><button class="btn-gh" onclick="exportXlsx(\'kelas\')">&#11123; Excel</button></div><div class="panel"><div class="tablewrap"><table class="dt"><thead><tr><th>No</th><th>ID</th><th>Nama</th><th>Beban</th><th>Absen</th><th>Sisa</th></tr></thead><tbody>'+r.map(function(x,i){return'<tr><td>'+(i+1)+'</td><td class="tnum">'+x.id+'</td><td>'+x.nama+'</td><td class="tnum">'+x.beban+'</td><td class="tnum">'+x.absen+'</td><td class="tnum">'+x.sisa+'</td></tr>'}).join("")+'</tbody></table></div></div>'}).catch(function(e){b.innerHTML=errB(e)})};
 V.rkDP=function(b){Promise.all([gcall("apiRekap",TK,"datang",{bulan:bln()}),gcall("apiList",TK,"guru")]).then(function(res){var r=res[0],guru=res[1];window._dpR=r;b.innerHTML='<div class="toolbar"><select class="selbox" id="rkDPGuru"><option value="">Semua Guru</option>'+guru.map(function(g){return'<option value="'+g.NIP+'">'+g.Nama+'</option>'}).join("")+'</select><button class="btn-em" onclick="prDP()">&#128424; Cetak F5</button><button class="btn-gh" onclick="exportXlsx(\'datang\')">&#11123; Excel</button></div><div class="panel"><div class="tablewrap"><table class="dt"><thead><tr><th>Tanggal</th><th>Guru</th><th>Masuk</th><th>Pulang</th><th>Terlambat</th><th>Cepat</th></tr></thead><tbody>'+r.map(function(a){return'<tr><td class="tnum">'+a.Tanggal+'</td><td>'+a["Nama Guru"]+'</td><td class="tnum">'+(a["Jam Datang"]||"-")+'</td><td class="tnum">'+(a["Jam Pulang"]||"-")+'</td><td>'+(a["Status Datang"]==="Terlambat"?"Ya":"-")+'</td><td>'+(a["Status Pulang"]==="Pulang Lebih Dulu"?"Ya":"-")+'</td></tr>'}).join("")+'</tbody></table></div></div>'}).catch(function(e){b.innerHTML=errB(e)})};
@@ -172,6 +186,34 @@ function delKal(id){if(!confirm("Hapus?"))return;gcall("apiDelete",TK,"kaldik",i
 function dlTpl(type){var h,f;if(type==="guru"){h="NIP,Nama,Username,Password,Mapel,No HP";f="template_guru.csv"}else{h="NISN,NIS,Nama,Kelas,JK,Tempat Lahir,Tanggal Lahir,Alamat,No HP Ortu";f="template_siswa.csv"}var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([h+"\n"],{type:"text/csv"}));a.download=f;a.click();toast("ok","Template terunduh")}
 // FIX BUG #4: Upload CSV with loading toast
 function upCSV(input,type){var file=input.files[0];if(!file)return;toast("ok","Mengupload "+file.name+"...");var reader=new FileReader();reader.onload=function(e){var lines=e.target.result.split("\n").filter(function(l){return l.trim()});if(lines.length<2){toast("err","File kosong");return}var hd=lines[0].split(",").map(function(h){return h.trim()}),count=0,chain=Promise.resolve();for(var i=1;i<lines.length;i++){(function(line){var cols=line.split(",").map(function(c){return c.trim()});if(cols.length<2)return;var obj={};hd.forEach(function(h,idx){obj[h]=cols[idx]||""});obj.Status="aktif";if(type==="guru"&&!obj.Password)obj.Password=obj.NIP||"guru123";chain=chain.then(function(){count++;return gcall("apiCreate",TK,type,obj)})})(lines[i])}chain.then(function(){toast("ok",count+" data "+type+" berhasil diimport");go(type==="guru"?"dataGuru":"dataSiswa")}).catch(function(e){toast("err","Error: "+e.message)})};reader.readAsText(file)}
+function addPiket(){
+  var hari = prompt("Hari (Senin/Selasa/Rabu/Kamis/Jumat):");
+  var nama = prompt("Nama Guru Piket:");
+  var nip = prompt("NIP:");
+  if(!hari || !nama) return;
+  gcall("apiCreate",TK,"piket",{Hari:hari,"Nama Guru Piket":nama,NIP:nip||""})
+    .then(function(){ toast("ok","Piket ditambahkan"); go("piket"); })
+    .catch(function(e){ toast("err",e.message); });
+}
+
+function editPiket(id){
+  var row = (window._piket||[]).filter(function(p){ return String(p.ID)===String(id); })[0];
+  if(!row) return;
+  var hari = prompt("Hari:", row.Hari);
+  var nama = prompt("Nama Guru Piket:", row["Nama Guru Piket"]);
+  var nip = prompt("NIP:", row.NIP);
+  if(!hari || !nama) return;
+  gcall("apiUpdate",TK,"piket",id,{Hari:hari,"Nama Guru Piket":nama,NIP:nip||""})
+    .then(function(){ toast("ok","Piket diperbarui"); go("piket"); })
+    .catch(function(e){ toast("err",e.message); });
+}
+
+function delPiket(id){
+  if(!confirm("Hapus jadwal piket ini?")) return;
+  gcall("apiDelete",TK,"piket",id)
+    .then(function(){ toast("ok","Terhapus"); go("piket"); })
+    .catch(function(e){ toast("err",e.message); });
+}
 loadHome();
 </script>
 </body>
