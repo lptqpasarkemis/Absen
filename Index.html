@@ -177,7 +177,7 @@
 <div class="toast-wrap" id="toasts"></div>
 
 <script>
-var API_URL="https://script.google.com/macros/s/AKfycbwtZd6WJ7etqDSqAVOmxccWNx_16dvibliDOxpIjoJ-tPSobl12qbhqdwBc2UzJYzjO/exec";
+var API_URL="https://script.google.com/macros/s/AKfycbzdG8tl1wskloEU6jEVnvzijrShbVk7RByOl7Yo-t-j1m67zaX8yKyUzE51lwrlleLE/exec";
 function gcall(fn){var a=[].slice.call(arguments,1),p=JSON.stringify(a);if(p.length<1800){return fetch(API_URL+"?fn="+encodeURIComponent(fn)+"&args="+encodeURIComponent(p),{redirect:"follow"}).then(function(r){return r.text()}).then(function(t){var j=JSON.parse(t);if(!j.ok)throw new Error(j.error||"Error");return j.data})}return fetch(API_URL,{method:"POST",body:JSON.stringify({fn:fn,args:a}),headers:{"Content-Type":"text/plain;charset=utf-8"},redirect:"follow"}).then(function(r){return r.text()}).then(function(t){var j=JSON.parse(t);if(!j.ok)throw new Error(j.error||"Error");return j.data})}
 
 var TK=null,SE=null,H=["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"],BL=["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"],$=function(s){return document.querySelector(s)},$$=function(s){return document.querySelectorAll(s)};
